@@ -11,6 +11,12 @@ from src.userdata import get_user_data, write_user_data
 from src.utils import calculate_one_rep_max, calculate_worker
 from telegram_token import TOKEN
 
+# Uncomment this if you run the bot on pythonanywhere.com
+#
+# from telebot import asyncio_helper
+# proxy_url = "http://proxy.server:3128"
+# asyncio_helper.proxy = proxy_url
+
 bot = AsyncTeleBot(TOKEN)
 
 logger.setLevel(logging.DEBUG)
@@ -103,9 +109,11 @@ async def reply_orm_init(message, user_data):
 async def reply_orm_weight(message, user_data):
     try:
         user_data['weight'] = float(message.text.strip())
+        if user_data['weight'] <= 0:
+            raise ValueError
     except ValueError:
         text = "I did not understand.\n" \
-               "Please enter the lifted weight (a float number)"
+               "Please enter the lifted weight (a positive float number)"
         await bot.reply_to(message, text)
         return
 
@@ -117,9 +125,11 @@ async def reply_orm_weight(message, user_data):
 async def reply_orm_reps(message, user_data):
     try:
         user_data['reps'] = int(message.text.strip())
+        if user_data['reps'] <= 0:
+            raise ValueError
     except ValueError:
         text = "I did not understand.\n" \
-               "Please enter the number of reps (a whole number)"
+               "Please enter the number of reps (a natural number)"
         await bot.reply_to(message, text)
         return
 
@@ -131,9 +141,11 @@ async def reply_orm_reps(message, user_data):
 async def reply_orm_sets(message, user_data):
     try:
         user_data['sets'] = int(message.text.strip())
+        if user_data['sets'] <= 0:
+            raise ValueError
     except ValueError:
         text = "I did not understand.\n" \
-               "Please enter the number of sets (a whole number)"
+               "Please enter the number of sets (a natural number)"
         await bot.reply_to(message, text)
         return
 
@@ -158,10 +170,13 @@ async def reply_orm_type(message, user_data):
         text += '_Sets: %d_\n' % user_data['sets']
         text += '_Exercise: %s_\n\n' % message.text.strip()
 
-        if orm > 0:
+        if orm is not None:
             text += '*Your one-rep max: %d*' % int(orm)
         else:
             text += '*Your one-rep max: ambulance*'
+
+        if user_data['reps'] > 8 or user_data['sets'] > 5:
+            text += '\n\nPlease note that reps above 8 or sets above 5 might yield inaccurate results.'
 
         markup = reply_markup(RESTART_WORDS)
         user_data['conversation_state'] = 'init'
@@ -187,9 +202,11 @@ async def reply_worker_init(message, user_data):
 async def reply_worker_weight(message, user_data):
     try:
         user_data['orm'] = float(message.text.strip())
+        if user_data['orm'] <= 0:
+            raise ValueError
     except ValueError:
         text = "I did not understand.\n" \
-               "Please enter the one-rep max (a float number)"
+               "Please enter the one-rep max (a positive float number)"
         await bot.reply_to(message, text)
         return
 
@@ -201,9 +218,11 @@ async def reply_worker_weight(message, user_data):
 async def reply_worker_reps(message, user_data):
     try:
         user_data['reps'] = int(message.text.strip())
+        if user_data['reps'] <= 0:
+            raise ValueError
     except ValueError:
         text = "I did not understand.\n" \
-               "Please enter the number of reps (a whole number)"
+               "Please enter the number of reps (a natural number)"
         await bot.reply_to(message, text)
         return
 
@@ -215,9 +234,11 @@ async def reply_worker_reps(message, user_data):
 async def reply_worker_sets(message, user_data):
     try:
         user_data['sets'] = int(message.text.strip())
+        if user_data['sets'] <= 0:
+            raise ValueError
     except ValueError:
         text = "I did not understand.\n" \
-               "Please enter the number of sets (a whole number)"
+               "Please enter the number of sets (a natural number)"
         await bot.reply_to(message, text)
         return
 
@@ -241,10 +262,13 @@ async def reply_worker_type(message, user_data):
         text += '_Sets: %d_\n' % user_data['sets']
         text += '_Exercise: %s_\n\n' % message.text.strip()
 
-        if worker > 0:
+        if worker is not None:
             text += '*Your rep weight: %d*' % int(worker)
         else:
             text += '*Your rep weight: ambulance*'
+
+        if user_data['reps'] > 8 or user_data['sets'] > 5:
+            text += '\n\nPlease note that reps above 8 or sets above 5 might yield inaccurate results.'
 
         markup = reply_markup(RESTART_WORDS)
         user_data['conversation_state'] = 'init'
