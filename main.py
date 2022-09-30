@@ -24,7 +24,7 @@ logger.addHandler(fh)
 async def handler(message):
     logger.info("Message from %s: %s", message.chat.id, message.text)
     user_data = get_user_data(message.chat.id)
-    if user_data is None or message.text.strip() == '/start' or message.text.strip() in restart_words:
+    if user_data is None or message.text.strip() == '/start' or message.text.strip() in RESTART_WORDS:
         user_data = {'conversation_state': 'init'}
     await reply(message, user_data)
 
@@ -260,6 +260,4 @@ async def reply_worker_type(message, user_data):
         markup = reply_markup(EXERCISE_LIST)
         await bot.reply_to(message, text, reply_markup=markup)
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(bot.infinity_polling(logger_level=logging.DEBUG))
-loop.close()
+asyncio.run(bot.polling())
