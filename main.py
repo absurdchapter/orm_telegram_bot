@@ -10,13 +10,10 @@ from telebot import logger
 from src.glossary import *
 from src.userdata import get_user_data, write_user_data
 from src.utils import calculate_one_rep_max, calculate_worker
-from telegram_token import TOKEN
 
-# Uncomment this if you run the bot on pythonanywhere.com
-#
-# from telebot import asyncio_helper
-# proxy_url = "http://proxy.server:3128"
-# asyncio_helper.proxy = proxy_url
+from config.telegram_token import TOKEN
+import config.proxy_settings
+
 
 bot = AsyncTeleBot(TOKEN)
 
