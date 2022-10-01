@@ -31,18 +31,18 @@ logger.addHandler(fh)
 async def handler(message):
     logger.info("Message from %s: %s", message.chat.id, message.text)
     try:
-        await reply(message)
+        user_data = get_user_data(message.chat.id)
+        if user_data is None or message.text.strip() == '/start' or message.text.strip() in RESTART_WORDS:
+            user_data = {'conversation_state': 'init'}
+        await reply(message, user_data)
     except Exception as exception:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-        logger.critical("Unexpected error [%s:%d]: " % (fname, exc_tb.tb_lineno) + str(exception))
+        logger.critical("Unexpected error [%s:%d]: %s: %s" % (fname, exc_tb.tb_lineno, type(exception).__name__,
+                                                              exception))
 
 
-async def reply(message):
-    user_data = get_user_data(message.chat.id)
-    if user_data is None or message.text.strip() == '/start' or message.text.strip() in RESTART_WORDS:
-        user_data = {'conversation_state': 'init'}
-
+async def reply(message, user_data):
     logger.debug("User data:"+str(user_data))
 
     conversation_state = user_data['conversation_state']
@@ -55,8 +55,6 @@ async def reply(message):
     elif conversation_state == 'option_select':
         await reply_option_select(message, user_data)
 
-    elif conversation_state == 'orm_init':
-        await reply_orm_init(message, user_data)
     elif conversation_state == 'orm_weight':
         await reply_orm_weight(message, user_data)
     elif conversation_state == 'orm_reps':
@@ -66,8 +64,6 @@ async def reply(message):
     elif conversation_state == 'orm_type':
         await reply_orm_type(message, user_data)
 
-    elif conversation_state == 'worker_init':
-        await reply_worker_init(message, user_data)
     elif conversation_state == 'worker_weight':
         await reply_worker_weight(message, user_data)
     elif conversation_state == 'worker_reps':
@@ -78,7 +74,7 @@ async def reply(message):
         await reply_worker_type(message, user_data)
 
     else:
-        assert False
+        assert False, "Conversation state assertion"
 
     write_user_data(message.chat.id, user_data)
 
@@ -116,10 +112,13 @@ async def reply_start(message, user_data):
 
 async def reply_option_select(message, user_data):
     if message.text.strip() in OPTION_LIST:
-        # BIFURCATION
         option = OPTION_DICT[message.text.strip()]
-        user_data['conversation_state'] = option + '_init'
-        await reply(message)
+        if option == 'orm':
+            await reply_orm_init(message, user_data)
+        elif option == 'worker':
+            await reply_worker_init(message, user_data)
+        else:
+            assert False, "Option select assertion"
     else:
         text = "I did not understand. Please select an option."
         markup = reply_markup(OPTION_LIST)
