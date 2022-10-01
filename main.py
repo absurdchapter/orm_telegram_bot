@@ -119,7 +119,7 @@ async def reply_option_select(message, user_data):
         # BIFURCATION
         option = OPTION_DICT[message.text.strip()]
         user_data['conversation_state'] = option + '_init'
-        await reply(message, user_data)
+        await reply(message)
     else:
         text = "I did not understand. Please select an option."
         markup = reply_markup(OPTION_LIST)
