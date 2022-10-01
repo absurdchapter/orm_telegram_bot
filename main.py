@@ -31,22 +31,26 @@ logger.addHandler(fh)
 async def handler(message):
     logger.info("Message from %s: %s", message.chat.id, message.text)
     try:
-        user_data = get_user_data(message.chat.id)
-        if user_data is None or message.text.strip() == '/start' or message.text.strip() in RESTART_WORDS:
-            user_data = {'conversation_state': 'init'}
-        await reply(message, user_data)
+        await reply(message)
     except Exception as exception:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         logger.critical("Unexpected error [%s:%d]: " % (fname, exc_tb.tb_lineno) + str(exception))
 
 
-async def reply(message, user_data):
+async def reply(message):
+    user_data = get_user_data(message.chat.id)
+    if user_data is None or message.text.strip() == '/start' or message.text.strip() in RESTART_WORDS:
+        user_data = {'conversation_state': 'init'}
+
     logger.debug("User data:"+str(user_data))
 
     conversation_state = user_data['conversation_state']
 
-    if conversation_state == 'init':
+    if message.text.strip() == '/help':
+        await reply_help(message)
+
+    elif conversation_state == 'init':
         await reply_start(message, user_data)
     elif conversation_state == 'option_select':
         await reply_option_select(message, user_data)
@@ -84,6 +88,21 @@ def reply_markup(buttons):
     markup.row(*buttons)
     markup.one_time_keyboard = True
     return markup
+
+
+async def reply_help(message):
+    text = "*One-repetition maximum* (*one rep maximum* or *1RM*) in weight training is the maximum amount of " \
+           "weight that a person can possibly lift for one repetition. One repetition maximum can be used for " \
+           "determining an individual's maximum strength and is the method for determining the winner in events " \
+           "such as powerlifting and weightlifting competitions. One repetition maximum is also used when " \
+           "designing a resistance training program to set up the exercises with percentages based on the " \
+           "one-rep max.\n\n" \
+           "The 1RM can either be calculated directly using maximal testing, or indirectly using _submaximal " \
+           "estimation_. \n" \
+           "For example, if you can lift *60 kg* for 5 sets of 6 repetitions, you should be able to " \
+           "lift *75 kg* once."
+
+    await bot.reply_to(message, text, parse_mode="markdown")
 
 
 async def reply_start(message, user_data):
