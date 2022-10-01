@@ -1,6 +1,7 @@
 import asyncio
 import logging.handlers
 import os
+import sys
 
 from telebot.async_telebot import AsyncTeleBot
 from telebot import types
@@ -29,10 +30,15 @@ logger.addHandler(fh)
 @bot.message_handler(func=lambda _: True)
 async def handler(message):
     logger.info("Message from %s: %s", message.chat.id, message.text)
-    user_data = get_user_data(message.chat.id)
-    if user_data is None or message.text.strip() == '/start' or message.text.strip() in RESTART_WORDS:
-        user_data = {'conversation_state': 'init'}
-    await reply(message, user_data)
+    try:
+        user_data = get_user_data(message.chat.id)
+        if user_data is None or message.text.strip() == '/start' or message.text.strip() in RESTART_WORDS:
+            user_data = {'conversation_state': 'init'}
+        await reply(message, user_data)
+    except Exception as exception:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        logger.critical("Unexpected error [%s:%d]: " % (fname, exc_tb.tb_lineno) + str(exception))
 
 
 async def reply(message, user_data):
@@ -84,7 +90,8 @@ async def reply_start(message, user_data):
     text = "Hi, I can help you calculate your *one-rep max* or *rep weight*.\n" \
            "Please select an option."
     markup = reply_markup(OPTION_LIST)
-    await bot.reply_to(message, text, reply_markup=markup, parse_mode="markdown")
+
+    await bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode="markdown")
     user_data['conversation_state'] = 'option_select'
 
 
@@ -103,7 +110,8 @@ async def reply_option_select(message, user_data):
 async def reply_orm_init(message, user_data):
     text = "Enter the lifted weight"
     user_data['conversation_state'] = 'orm_weight'
-    await bot.reply_to(message, text)
+
+    await bot.send_message(message.chat.id, text)
 
 
 async def reply_orm_weight(message, user_data):
@@ -119,7 +127,7 @@ async def reply_orm_weight(message, user_data):
 
     text = 'Enter the number of reps'
     user_data['conversation_state'] = 'orm_reps'
-    await bot.reply_to(message, text)
+    await bot.send_message(message.chat.id, text)
 
 
 async def reply_orm_reps(message, user_data):
@@ -135,7 +143,7 @@ async def reply_orm_reps(message, user_data):
 
     text = 'Enter the number of sets'
     user_data['conversation_state'] = 'orm_sets'
-    await bot.reply_to(message, text)
+    await bot.send_message(message.chat.id, text)
 
 
 async def reply_orm_sets(message, user_data):
@@ -152,7 +160,7 @@ async def reply_orm_sets(message, user_data):
     text = 'Select the exercise'
     user_data['conversation_state'] = 'orm_type'
     markup = reply_markup(EXERCISE_LIST)
-    await bot.reply_to(message, text, reply_markup=markup)
+    await bot.send_message(message.chat.id, text, reply_markup=markup)
 
 
 async def reply_orm_type(message, user_data):
@@ -184,19 +192,20 @@ async def reply_orm_type(message, user_data):
         del user_data['reps']
         del user_data['sets']
 
-        await bot.reply_to(message, text, reply_markup=markup, parse_mode="markdown")
+        await bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode="markdown")
 
     else:
         text = 'I did not understand.\n'
         text += 'Please select the exercise.'
-        markup = reply_markup(OPTION_LIST)
+        markup = reply_markup(EXERCISE_LIST)
         await bot.reply_to(message, text, reply_markup=markup)
 
 
 async def reply_worker_init(message, user_data):
     text = 'Enter your one-rep max'
     user_data['conversation_state'] = 'worker_weight'
-    await bot.reply_to(message, text)
+    # await bot.reply_to(message, text)
+    await bot.send_message(message.chat.id, text)
 
 
 async def reply_worker_weight(message, user_data):
@@ -212,7 +221,8 @@ async def reply_worker_weight(message, user_data):
 
     text = 'Enter the number of reps'
     user_data['conversation_state'] = 'worker_reps'
-    await bot.reply_to(message, text)
+
+    await bot.send_message(message.chat.id, text)
 
 
 async def reply_worker_reps(message, user_data):
@@ -228,7 +238,8 @@ async def reply_worker_reps(message, user_data):
 
     text = 'Enter the number of sets'
     user_data['conversation_state'] = 'worker_sets'
-    await bot.reply_to(message, text)
+
+    await bot.send_message(message.chat.id, text)
 
 
 async def reply_worker_sets(message, user_data):
@@ -245,7 +256,8 @@ async def reply_worker_sets(message, user_data):
     text = 'Select the exercise'
     user_data['conversation_state'] = 'worker_type'
     markup = reply_markup(EXERCISE_LIST)
-    await bot.reply_to(message, text, reply_markup=markup)
+
+    await bot.send_message(message.chat.id, text, reply_markup=markup)
 
 
 async def reply_worker_type(message, user_data):
@@ -276,7 +288,7 @@ async def reply_worker_type(message, user_data):
         del user_data['reps']
         del user_data['sets']
 
-        await bot.reply_to(message, text, reply_markup=markup, parse_mode="markdown")
+        await bot.send_message(message.chat.id, text, reply_markup=markup, parse_mode="markdown")
 
     else:
         text = 'I did not understand.\n'
