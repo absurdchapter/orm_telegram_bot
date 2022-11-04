@@ -13,3 +13,8 @@ services:
         source: ./user_data
         target: /app/user_data
     restart: always
+    deploy:
+        resources:
+          limits:
+            memory: 50M
+      
