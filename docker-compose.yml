@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  bot:
+    build: .
+    environment: 
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+    volumes:
+      - type: bind
+        source: ./logs
+        target: /app/logs
+      - type: bind
+        source: ./user_data
+        target: /app/user_data
+    restart: always

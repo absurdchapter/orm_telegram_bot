@@ -11,11 +11,10 @@ from src.glossary import *
 from src.userdata import get_user_data, write_user_data
 from src.utils import calculate_one_rep_max, calculate_worker
 
-from config.telegram_token import TOKEN
-import config.proxy_settings
+import src.config
 
 
-bot = AsyncTeleBot(TOKEN)
+bot = AsyncTeleBot(src.config.TELEGRAM_TOKEN)
 
 logger.setLevel(logging.DEBUG)
 os.makedirs('logs', exist_ok=True)
